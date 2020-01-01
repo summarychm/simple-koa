@@ -12,21 +12,28 @@ class Application extends Emitter {
 		this.request = {};
 		this.response = {};
 	}
-	//
+	// koa初始化
 	callback() {
-		// const middlewareFn = compose(this.middleware);
-		// 接收到新请求
-		return function handleRequest(req, res) {
+		const middlewareFn = compose(this.middleware);
+		if (!this.listenerCount("error")) this.on("error", this.onerror);
+
+		// 接收到新http请求
+		const handleRequest = (req, res) => {
 			console.log("============ req begin ====================");
 			console.log(req);
 			console.log(res);
 			console.log("============ req end ======================");
 		};
+		return handleRequest;
 	}
 	// 创建httpServer,内部创建
 	listen(...args) {
 		const server = http.createServer(this.callback());
 		return server.listen(...args);
+	}
+	onerror(error) {
+		console.log("默认的error方法");
+		console.error(error);
 	}
 }
 
