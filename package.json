@@ -1,0 +1,24 @@
+{
+	"name": "simple-koa",
+	"version": "1.0.0",
+	"description": "实现一款简易的koa2框架",
+	"main": "index.js",
+	"scripts": {
+		"start": "nodemon src/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/summarychm/simple-koa.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/summarychm/simple-koa/issues"
+	},
+	"homepage": "https://github.com/summarychm/simple-koa#readme",
+	"devDependencies": {
+		"koa": "^2.11.0",
+		"nodemon": "^2.0.2"
+	}
+}
