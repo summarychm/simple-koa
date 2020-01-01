@@ -2,39 +2,94 @@
 const Emitter = require("events");
 const http = require("http");
 const compose = require("@koa-compose");
+const context = require("./context");
+const request = require("./request");
+const response = require("./response");
+
 class Application extends Emitter {
 	constructor(options) {
 		super();
 		options = options || {};
 		this.middleware = [];
 		this.env = options.env || process.env || "development";
-		this.context = {};
-		this.request = {};
-		this.response = {};
+		this.context = Object.create(context);
+		this.request = Object.create(request);
+		this.response = Object.create(response);
+	}
+	// 创建httpServer,入口方法
+	listen(...args) {
+		const server = http.createServer(this.callback());
+		return server.listen(...args);
 	}
 	// koa初始化
 	callback() {
 		const middlewareFn = compose(this.middleware);
+		// console.log(middlewareFn);
+
+		// 注册默认error回调
 		if (!this.listenerCount("error")) this.on("error", this.onerror);
 
 		// 接收到新http请求
 		const handleRequest = (req, res) => {
-			console.log("============ req begin ====================");
-			console.log(req);
-			console.log(res);
-			console.log("============ req end ======================");
+			const ctx = this.createContext(req, res);
+			this.handleRequest(ctx, middlewareFn);
 		};
 		return handleRequest;
 	}
-	// 创建httpServer,内部创建
-	listen(...args) {
-		const server = http.createServer(this.callback());
-		return server.listen(...args);
+	// 根据req,res创建ctx
+	createContext(req, res) {
+		const ctx = this.context;
+		const request = (ctx.request = this.request);
+		const response = (ctx.response = this.response);
+
+		// 将res,req分别挂载到ctx,request,response中
+		ctx.app = response.app = request.app = this;
+		ctx.req = response.req = request.req = req;
+		ctx.res = response.res = request.res = res;
+		request.ctx = response.ctx = ctx;
+		request.response = response; // req,res相互指向
+		response.request = request; // res,req相互指向
+		ctx.originalUrl = request.originalUrl = req.url;
+		ctx.state = {};
+		return ctx;
+	}
+	// 调用中间件处理请求,并下发res
+	handleRequest(ctx, middlewareFn) {
+		const res = ctx.res;
+		res.statusCode = 404;
+		const onerror = (err) => ctx.onerror(err);
+		const handleResponse = () => respond(ctx);
+		middlewareFn(ctx)
+			.then(handleResponse)
+			.catch(onerror);
+	}
+	use(fn) {
+		this.middleware.push(fn);
+		return this;
 	}
 	onerror(error) {
 		console.log("默认的error方法");
 		console.error(error);
 	}
+}
+
+function respond(ctx) {
+	console.log("============ ctx begin ====================");
+	console.log(Object.keys(ctx));
+	console.log("============ ctx end ======================");
+	const res = ctx.res;
+	let body = ctx.body;
+
+	const code = ctx.status;
+	// responses
+	if (Buffer.isBuffer(body)) return res.end(body);
+	if ("string" == typeof body) return res.end(body);
+	// body: json
+	body = JSON.stringify(body);
+	if (!res.headersSent) {
+		ctx.length = Buffer.byteLength(body);
+	}
+	res.end(body);
 }
 
 module.exports = Application;

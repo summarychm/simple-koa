@@ -1,12 +1,6 @@
 const Koa = require("@koa");
 const app = new Koa();
 
-// app.use(async (ctx) => {
-// 	ctx.body = "Hello World";
-// });
-app.listen(3000);
-
-/*
 // logger
 
 app.use(async (ctx, next) => {
@@ -37,4 +31,4 @@ app.use(async (ctx) => {
 	console.log("顺序", 6);
 });
 
-*/
+app.listen(3000);

@@ -16,9 +16,9 @@ Delegator.prototype.getter = function(name) {
 	let proto = this.proto;
 	let target = this.target;
 	proto.__defineGetter__(name, function() {
-		console.log("============ delegator this begin ====================");
-		console.log(this);
-		console.log("============ delegator this end ======================");
+		// console.log("============ delegator this begin ====================");
+		// console.log(this);
+		// console.log("============ delegator this end ======================");
 		return this[target][name];
 	});
 	return this; // 方便链式调用
