@@ -12,6 +12,7 @@ class Application extends Emitter {
 		options = options || {};
 		this.middleware = [];
 		this.env = options.env || process.env || "development";
+		// 方便对实例进行修改,而不污染默认对象
 		this.context = Object.create(context);
 		this.request = Object.create(request);
 		this.response = Object.create(response);
@@ -24,17 +25,16 @@ class Application extends Emitter {
 	// koa初始化
 	callback() {
 		const middlewareFn = compose(this.middleware);
-		// console.log(middlewareFn);
 
 		// 注册默认error回调
 		if (!this.listenerCount("error")) this.on("error", this.onerror);
 
 		// 接收到新http请求
-		const handleRequest = (req, res) => {
+		const handleFN = (req, res) => {
 			const ctx = this.createContext(req, res);
 			this.handleRequest(ctx, middlewareFn);
 		};
-		return handleRequest;
+		return handleFN;
 	}
 	// 根据req,res创建ctx
 	createContext(req, res) {
@@ -42,7 +42,6 @@ class Application extends Emitter {
 		const request = (ctx.request = this.request);
 		const response = (ctx.response = this.response);
 
-		// 将res,req分别挂载到ctx,request,response中
 		ctx.app = response.app = request.app = this;
 		ctx.req = response.req = request.req = req;
 		ctx.res = response.res = request.res = res;
@@ -74,13 +73,9 @@ class Application extends Emitter {
 }
 
 function respond(ctx) {
-	console.log("============ ctx begin ====================");
-	console.log(Object.keys(ctx));
-	console.log("============ ctx end ======================");
 	const res = ctx.res;
 	let body = ctx.body;
 
-	const code = ctx.status;
 	// responses
 	if (Buffer.isBuffer(body)) return res.end(body);
 	if ("string" == typeof body) return res.end(body);
