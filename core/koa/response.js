@@ -75,7 +75,8 @@ module.exports = {
 		}
 
 		// set the status
-		if (!this._explicitStatus) this.status = 200;
+		// if (!this._explicitStatus)
+		this.status = 200;
 
 		// set the content-type only if not yet set
 		const setType = !this.has("Content-Type");

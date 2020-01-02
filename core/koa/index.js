@@ -73,19 +73,20 @@ class Application extends Emitter {
 	}
 }
 
+/** 下发response,支持四种类型(Buffer/String/Stream/JSON)
+ * @param {Object} ctx koa实例
+ */
 function respond(ctx) {
 	const res = ctx.res;
 	let body = ctx.body;
 
 	// responses
-	if (Buffer.isBuffer(body)) return res.end(body);
-	if ("string" == typeof body) return res.end(body);
-	if (body instanceof Stream) return body.pipe(res);
-	// body: json
+	if (Buffer.isBuffer(body)) return res.end(body); // Buffer
+	if ("string" == typeof body) return res.end(body); // String
+	if (body instanceof Stream) return body.pipe(res); // Stream
+	// body: JSON
 	body = JSON.stringify(body);
-	if (!res.headersSent) {
-		ctx.length = Buffer.byteLength(body);
-	}
+	if (!res.headersSent) ctx.length = Buffer.byteLength(body);
 	res.end(body);
 }
 
