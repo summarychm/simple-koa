@@ -1,3 +1,4 @@
+//@ts-check
 "use strict";
 
 /**
@@ -49,13 +50,6 @@ module.exports = {
 		if (this.body && statuses.empty[code]) this.body = null;
 	},
 
-	/**
-	 * Get response body.
-	 *
-	 * @return {Mixed}
-	 * @api public
-	 */
-
 	get body() {
 		return this._body;
 	},
@@ -99,6 +93,14 @@ module.exports = {
 			this.length = val.length;
 			return;
 		}
+		// stream
+		if ("function" == typeof val.pipe) {
+			// overwriting
+			if (null != original && original != val) this.remove("Content-Length");
+
+			if (setType) this.type = "bin";
+			return;
+		}
 
 		// json
 		this.remove("Content-Length");
@@ -113,7 +115,7 @@ module.exports = {
 	 */
 
 	set length(n) {
-		this.set("Content-Length", n);
+		this.set("Content-Length", n + "");
 	},
 
 	/**
@@ -226,7 +228,7 @@ module.exports = {
 	 *    this.set({ Accept: 'text/plain', 'X-API-Key': 'tobi' });
 	 *
 	 * @param {String|Object|Array} field
-	 * @param {String} val
+	 * @param {any} val
 	 * @api public
 	 */
 

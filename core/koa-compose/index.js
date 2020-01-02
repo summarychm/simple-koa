@@ -14,8 +14,12 @@ function compose(middlewares) {
 			// 如果fn不存在则直接Promise.resolve().
 			if (!fn) return Promise.resolve();
 
-			// 每个middleWare接收的next形参都绑定为调用下一个中间的next函数,用于链式调用.
-			return Promise.resolve(fn(ctx, () => dispatch(i + 1)));
+			try {
+				// 每个middleWare接收的next形参都绑定为调用下一个中间的next函数,用于链式调用.
+				return Promise.resolve(fn(ctx, () => dispatch(i + 1)));
+			} catch (err) {
+				return Promise.reject(err);
+			}
 		}
 		return dispatch(0);
 	};

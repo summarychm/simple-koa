@@ -1,6 +1,7 @@
 //@ts-check
 const Emitter = require("events");
 const http = require("http");
+const Stream = require("stream");
 const compose = require("@koa-compose");
 const context = require("./context");
 const request = require("./request");
@@ -79,6 +80,7 @@ function respond(ctx) {
 	// responses
 	if (Buffer.isBuffer(body)) return res.end(body);
 	if ("string" == typeof body) return res.end(body);
+	if (body instanceof Stream) return body.pipe(res);
 	// body: json
 	body = JSON.stringify(body);
 	if (!res.headersSent) {
