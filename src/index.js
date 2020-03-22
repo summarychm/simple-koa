@@ -1,9 +1,23 @@
 const path = require("path");
 const Koa = require("@koa");
 const static = require("@koa-static");
-const app = new Koa();
+const better = require("@koa-better-body");
 
+const app = new Koa();
 app.use(static(path.join(__dirname, "../public")));
+
+app.use(
+	better({
+		uploadDir: path.resolve(__dirname, "../upload"),
+	}),
+);
+app.use(async (ctx, next) => {
+	if (ctx.path === "/form" && ctx.method === "POST") {
+		// let obj = await bodyPaser(ctx.req); ctx.request.body
+		ctx.type = "json";
+		ctx.body = ctx.request.fields;
+	}
+});
 
 app.use(async (ctx, next) => {
 	console.log("顺序", 5);

@@ -9,8 +9,7 @@ const ctx = {
 			this[COOKIES] = new Cookies(this.req, this.res, {
 				keys: this.app.keys, // 从koa实例上获取keys属性
 				//TODO 这里应该可以直接用this.secure.
-				secure: this.secure, // 从req上获取secure
-				// secure: this.request.secure, // 从req上获取secure
+				secure: this.secure, // 从req上获取secure this.request.secure
 			});
 		}
 		return this[COOKIES];
@@ -19,16 +18,10 @@ const ctx = {
 		this[COOKIES] = _cookies;
 	},
 	onerror(err) {
-		// don't do anything if there is no error.
-		// this allows you to pass `this.onerror`
-		// to node-style callbacks.
 		if (null == err) return;
-
-		// delegate
 		this.app.emit("error", err, this);
 		// respond
-		const code = statuses[err.status];
-		const msg = err.expose ? err.message : code;
+		const msg = err.expose ? err.message : statuses[err.status];
 		this.status = err.status;
 		this.length = Buffer.byteLength(msg);
 		res.end(msg);

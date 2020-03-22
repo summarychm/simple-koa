@@ -12,6 +12,7 @@
 		"@koa": "./core/koa",
 		"@koa-compose": "./core/koa-compose",
 		"@koa-static": "./core/koa-static",
+		"@koa-better-body": "./core/koa-better-body",
 		"@delegates": "./core/delegates"
 	},
 	"_moduleAliasIgnoreWarning": true,

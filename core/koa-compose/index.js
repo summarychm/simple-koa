@@ -1,6 +1,5 @@
-/** 合并中间件数组为中间件执行器,通过next调用下一个中间件.
+/** 合并中间件数组为中间件执行器(单一函数,通过next调用下一个中间件).
  * @param {Function[]} middlewares 中间件数组
-
  */
 function compose(middlewares) {
 	let idx = -1; // flag
@@ -8,14 +7,12 @@ function compose(middlewares) {
 		function dispatch(i) {
 			idx = i;
 			let fn = middlewares[idx];
-			// 中间件数组已经执行完毕,如还在执行(最后一个中间件还调用next的错误情况)
+			// 边界条件跳出循环
 			if (idx === middlewares.length) fn = callBack;
 
-			// 如果fn不存在则直接Promise.resolve().
-			if (!fn) return Promise.resolve();
-
+			if (!fn) return Promise.resolve(); //处理fn为空的情况
 			try {
-				// 每个middleWare接收的next形参都绑定为调用下一个中间的next函数,用于链式调用.
+				// 延迟绑定,next都被绑定为调用下一个中间的懒执行函数,用于中间件链式调用.
 				return Promise.resolve(fn(ctx, () => dispatch(i + 1)));
 			} catch (err) {
 				return Promise.reject(err);

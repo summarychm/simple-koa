@@ -1,4 +1,3 @@
-//@ts-check
 const Emitter = require("events");
 const http = require("http");
 const Stream = require("stream");
@@ -10,10 +9,11 @@ const response = require("./response");
 class Application extends Emitter {
 	constructor(options) {
 		super();
-		options = options || {};
-		this.middleware = [];
+		options = Object.assign({}, options);
+		this.middleware = []; // 存放中间件集合
 		this.env = options.env || process.env || "development";
-		// 方便对实例进行修改,而不污染默认对象
+
+		// 方便对实例进行修改,而不污染默认对象(如实例listen多个端口的情况)
 		this.context = Object.create(context);
 		this.request = Object.create(request);
 		this.response = Object.create(response);
@@ -23,14 +23,14 @@ class Application extends Emitter {
 		const server = http.createServer(this.callback());
 		return server.listen(...args);
 	}
-	// koa初始化
+	// koa中间件初始化(合并中间件,构建ctx,注入http.createServer)
 	callback() {
-		const middlewareFn = compose(this.middleware);
-
 		// 注册默认error回调
 		if (!this.listenerCount("error")) this.on("error", this.onerror);
 
-		// 接收到新http请求
+		const middlewareFn = compose(this.middleware); // 合并use注册的所有中间件为一个统一的函数
+
+		// 原生http.createServer的处理函数(request,response)
 		const handleFN = (req, res) => {
 			const ctx = this.createContext(req, res);
 			this.handleRequest(ctx, middlewareFn);
@@ -50,18 +50,16 @@ class Application extends Emitter {
 		request.response = response; // req,res相互指向
 		response.request = request; // res,req相互指向
 		ctx.originalUrl = request.originalUrl = req.url;
-		ctx.state = {};
+		ctx.state = {}; // 用于中间件间相互传值
 		return ctx;
 	}
-	// 调用中间件处理请求,并下发res
+	// 调用中间件处理请求,所有中间件处理完毕后,通过ctx.body下发res
 	handleRequest(ctx, middlewareFn) {
 		const res = ctx.res;
 		res.statusCode = 404;
-		const onerror = (err) => ctx.onerror(err);
-		const handleResponse = () => respond(ctx);
 		middlewareFn(ctx)
-			.then(handleResponse)
-			.catch(onerror);
+			.then(() => respond(ctx))
+			.catch(ctx.onerror);
 	}
 	use(fn) {
 		this.middleware.push(fn);
@@ -80,10 +78,9 @@ function respond(ctx) {
 	const res = ctx.res;
 	let body = ctx.body;
 
-	// responses
 	if (Buffer.isBuffer(body)) return res.end(body); // Buffer
 	if ("string" == typeof body) return res.end(body); // String
-	if (body instanceof Stream) return body.pipe(res); // Stream
+	if (body instanceof Stream) return body.pipe(res); // Stream,使用pipe单独处理
 	// body: JSON
 	body = JSON.stringify(body);
 	if (!res.headersSent) ctx.length = Buffer.byteLength(body);
